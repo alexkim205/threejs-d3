@@ -4,7 +4,10 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "css": "node-sass ./public/sass -ro ./public/css",
+    "css:watch": "npm run css && node-sass ./public/sass -rwo ./public/css",
+    "browserify": "browserify ./public/js/index.js -o ./public/js/index_bundle.js",
+    "browserify:watch": "npm run browserify && watchify ./public/js/index.js -o ./public/js/index_bundle.js"
   },
   "author": "",
   "license": "ISC",
@@ -12,6 +15,7 @@
     "express": "^4.16.3",
     "jquery": "^3.3.1",
     "jsdom": "^11.11.0",
+    "node-sass": "^4.9.0",
     "pug": "^2.0.3",
     "three": "^0.93.0"
   }
