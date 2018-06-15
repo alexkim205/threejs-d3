@@ -1,5 +1,5 @@
 // import three.js
-var Detector = require('three/examples/js/Detector')
+// var Detector = require('three/examples/js/Detector')
 
 // import jquery with jsdom
 // require("jsdom/lib/old-api").env("", function (err, window) {
@@ -12,8 +12,6 @@ var Detector = require('three/examples/js/Detector')
 
 // check if WebGL supported
 if (Detector.webgl) {
-    // Initiate function or other initializations here
-    // animate();
     console.log("WebGL is supported. You are good to go!")
 } else {
     console.log("WebGL is not supported!")

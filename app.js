@@ -14,6 +14,7 @@ app.use('/', indexRouter);
 
 // serve static files in folder called public
 app.use(express.static('public'))
+app.use(express.static('node_modules'))
 
 // listen on port 3000
 app.listen(8080, () => console.log('Example app listening on port 8080!'))
