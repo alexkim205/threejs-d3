@@ -4,9 +4,10 @@
 // var CanvasRenderer = require('three/examples/js/renderers/CanvasRenderer')(THREE)
 
 // threejs variables
-var camera, scene, renderer
-var axisHelper, plane
+var camera, scene, renderer, axisHelper
 var controls
+var ambientLight, pointLight, shadowMaterial
+var shape1, shape2
 
 init()
 
@@ -15,17 +16,35 @@ function init() {
     /////////////////////////////////////////
     // Scene Setup
     /////////////////////////////////////////
-
+    // Scene
     scene = new THREE.Scene()
-    scene.background = new THREE.Color(0xfff000)
+    // Camera
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-    camera.position.set(5, 5, 5)
+    camera.position.set(100, 100, 20)
     camera.lookAt(scene.position)
+    // Renderer
     renderer = new THREE.WebGLRenderer({
         antialias: true
     })
     renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer.setClearColor(0xfff6e6);
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    // Lights
+    ambientLight = new THREE.AmbientLight(0xffffff, 0.2)
+    scene.add(ambientLight)
+    pointLight = new THREE.PointLight(0xffffff, 1, 0, 2)
+    pointLight.position.set(25, 50, 25)
+    pointLight.castShadow = true
+    pointLight.shadow.mapSize.width = 1024
+    pointLight.shadow.mapSize.height = 1024
+    scene.add(pointLight)
+    // Shadows
+    shadowMaterial = new THREE.ShadowMaterial({
+        color: 0x669999,
+        opacity: 0.5,
+    })
 
     document.body.appendChild(renderer.domElement)
 
@@ -33,41 +52,61 @@ function init() {
     // Trackball Controller
     /////////////////////////////////////////
     controls = new THREE.OrbitControls(camera, renderer.domElement)
+    controls.target = new THREE.Vector3(0, 15, 0)
+    // controls.maxPolarAngle = Math.PI / 2
     controls.addEventListener('change', render)
 
     /////////////////////////////////////////
     // Utilities
     /////////////////////////////////////////
 
-    axisHelper = new THREE.AxisHelper(1.25);
+    axisHelper = new THREE.AxesHelper(1.25);
     scene.add(axisHelper);
 
+    /////////////////////////////////////////
+    // Shapes
+    /////////////////////////////////////////
+    // ground
     plane = new THREE.Mesh(
-        new THREE.PlaneGeometry(5, 5, 5, 5),
-        new THREE.MeshBasicMaterial({
-            color: 0x393839,
-            wireframe: true
-        })
+        new THREE.BoxGeometry(100, .1, 100),
+        shadowMaterial
     )
-    plane.rotateX(Math.PI / 2)
+    plane.receiveShadow = true
     scene.add(plane)
-    render()
+    // generic octahedron
+    var Octa = function () {
+        THREE.Group.apply(this, arguments);
+        let shape = new THREE.Mesh(
+            new THREE.OctahedronGeometry(10, 1),
+            new THREE.MeshStandardMaterial({
+                color: getRandomColor(),
+                flatShading: THREE.FlatShading,
+                metalness: 0,
+                roughness: 0.8
+            })
+        )
+        shape.rotateZ(Math.PI / Math.random())
+        shape.castShadow = true
+        shape.receiveShadow = true
 
-    /////////////////////////////////////////
-    // Render Loop
-    /////////////////////////////////////////
-
-    function render() {
-        renderer.render(scene, camera)
+        let bb_box3 = new THREE.Box3().setFromObject(shape)
+        let bb = new THREE.Box3Helper(bb_box3, 0xff0066)
+        shape.position.y += bb_box3.max.y
+        // shape.position.x += bb_box3.max.x
+        this.add(shape) // add to group
+        this.add(bb)
     }
-    // controls.addEventListener('change', render)
+    Octa.prototype = Object.create(THREE.Group.prototype)
+    Octa.prototype.constructor = Octa
 
-    // function animLoop() {
-    //     requestAnimationFrame(animLoop)
-    //     controls.update()
-    // }
-
-    // animLoop()
+    // add shapes
+    shape1 = new Octa()
+    shape1.position.x += 10
+    scene.add(shape1)
+    shape2 = new Octa()
+    shape2.position.x -= 10
+    shape2.scale.set(.8,.8,.8);
+    scene.add(shape2)
 
     /////////////////////////////////////////
     // Window Resizing
@@ -77,8 +116,28 @@ function init() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
-        controls.handleResize();
         render();
     }, false);
 
+    /////////////////////////////////////////
+    // Render Loop
+    /////////////////////////////////////////
+
+    function render() {
+        renderer.render(scene, camera)
+    }
+
+}
+
+/////////////////////////////////////////
+// Helper Functions (not rltd to scene)
+/////////////////////////////////////////
+
+function getRandomColor() {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
 }
